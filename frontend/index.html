@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4F46E5">
+  <link rel="manifest" href="manifest.json">
+  <title>Smart Attendance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { indigo: { 600: '#4F46E5', 700: '#4338CA' }}}}};
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <header class="bg-indigo-600 text-white p-4 shadow">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <h1 class="font-semibold">Smart Attendance</h1>
+      <div id="userArea" class="text-sm opacity-90"></div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-4 space-y-6">
+    <!-- Login -->
+    <section id="view-login" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <h2 class="text-lg font-semibold mb-2">Login</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input id="login-username" class="border rounded-md p-2" placeholder="Username">
+        <input id="login-password" type="password" class="border rounded-md p-2" placeholder="Password">
+        <button id="btn-login" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Login</button>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Admin: admin/admin123, Lecturer: lecturer/lect123, Student: student/stud123</p>
+    </section>
+
+    <!-- Admin View -->
+    <section id="view-admin" class="hidden bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <h2 class="text-lg font-semibold mb-4">Admin — Manage Courses</h2>
+      <div class="grid sm:grid-cols-4 gap-2 items-end">
+        <input id="course-code" class="border rounded-md p-2" placeholder="Code (e.g., CS101)">
+        <input id="course-name" class="border rounded-md p-2" placeholder="Name">
+        <input id="course-lecturerId" class="border rounded-md p-2" placeholder="Lecturer ID">
+        <button id="btn-create-course" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Create</button>
+      </div>
+      <div class="mt-4">
+        <button id="btn-load-courses" class="text-indigo-700">Reload Courses</button>
+        <ul id="admin-courses" class="mt-2 space-y-1 text-sm"></ul>
+      </div>
+    </section>
+
+    <!-- Lecturer View -->
+    <section id="view-lecturer" class="hidden">
+      <div class="grid lg:grid-cols-3 gap-4">
+        <!-- Left: Course selector -->
+        <div class="lg:col-span-1 space-y-4">
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div class="text-sm text-gray-600">Current Course</div>
+            <select id="lect-course" class="mt-2 w-full border rounded-md p-2 focus:ring-indigo-600"></select>
+          </div>
+        </div>
+
+        <!-- Center: QR card -->
+        <div class="lg:col-span-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Session QR Code</h3>
+            <button id="btn-new-qr" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Generate</button>
+          </div>
+          <div class="mt-4 flex items-center justify-center">
+            <canvas id="qrCanvas" width="180" height="180" class="border rounded-md"></canvas>
+          </div>
+          <div id="qrToken" class="mt-2 text-xs text-gray-500 break-all"></div>
+        </div>
+
+        <!-- Right: Pie chart -->
+        <div class="lg:col-span-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h3 class="font-semibold">Attendance Overview</h3>
+          <canvas id="pie" width="240" height="240" class="mx-auto mt-4"></canvas>
+          <div class="text-center text-2xl font-semibold"><span id="piePct">0</span>%</div>
+        </div>
+      </div>
+
+      <!-- Live list -->
+      <div class="mt-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <h3 class="font-semibold mb-2">Live Attendance</h3>
+        <ul id="live-list" class="divide-y text-sm"></ul>
+      </div>
+    </section>
+
+    <!-- Student View -->
+    <section id="view-student" class="hidden bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <h2 class="text-lg font-semibold">Student — Scan QR</h2>
+      <div class="grid sm:grid-cols-4 gap-2 items-end mt-2">
+        <input id="stud-courseId" class="border rounded-md p-2" placeholder="Course ID">
+        <input id="stud-studentId" class="border rounded-md p-2" placeholder="Your User ID">
+        <input id="stud-qrToken" class="border rounded-md p-2" placeholder="QR Token">
+        <button id="btn-scan" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Submit</button>
+      </div>
+      <div id="stud-status" class="text-sm text-gray-600 mt-2"></div>
+    </section>
+  </main>
+
+  <script>
+    const API = 'http://localhost:8080';
+    let token = null; let role = null; let username = null;
+
+    function setView() {
+      document.getElementById('view-login').classList.toggle('hidden', !!token);
+      document.getElementById('view-admin').classList.toggle('hidden', role !== 'ADMIN');
+      document.getElementById('view-lecturer').classList.toggle('hidden', role !== 'LECTURER');
+      document.getElementById('view-student').classList.toggle('hidden', role !== 'STUDENT');
+      document.getElementById('userArea').textContent = token ? (username + ' (' + role + ')') : '';
+    }
+
+    async function api(path, opts = {}) {
+      const headers = opts.headers || {}; headers['Content-Type'] = 'application/json';
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + path, { ...opts, headers });
+      if (!res.ok) throw new Error(await res.text());
+      return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text();
+    }
+
+    document.getElementById('btn-login').onclick = async () => {
+      const usernameEl = document.getElementById('login-username');
+      const passwordEl = document.getElementById('login-password');
+      try {
+        const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ username: usernameEl.value, password: passwordEl.value }) });
+        token = data.token; username = usernameEl.value;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        role = payload.role;
+        setView();
+        if (role === 'ADMIN' || role === 'LECTURER') loadCourses();
+      } catch (e) { alert('Login failed'); }
+    };
+
+    async function loadCourses() {
+      const courses = await api('/api/courses');
+      const ul = document.getElementById('admin-courses'); if (ul) ul.innerHTML = '';
+      courses.forEach(c => {
+        if (ul) { const li = document.createElement('li'); li.textContent = c.id + ' — ' + c.code + ' ' + c.name; ul.appendChild(li); }
+      });
+      const sel = document.getElementById('lect-course'); if (sel) { sel.innerHTML = ''; courses.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.code + ' — ' + c.name; sel.appendChild(o); }); }
+    }
+
+    document.getElementById('btn-create-course').onclick = async () => {
+      const code = document.getElementById('course-code').value;
+      const name = document.getElementById('course-name').value;
+      const lecturerId = Number(document.getElementById('course-lecturerId').value || '0');
+      await api('/api/courses', { method: 'POST', body: JSON.stringify({ code, name, lecturerId }) });
+      await loadCourses();
+    };
+
+    // QR generation and live list stub (pull latest attendance for course)
+    document.getElementById('btn-new-qr').onclick = async () => {
+      const courseId = Number(document.getElementById('lect-course').value);
+      const res = await api('/api/attendance/qr', { method: 'POST', body: JSON.stringify({ courseId }) });
+      document.getElementById('qrToken').textContent = res.qrToken;
+      drawQrPlaceholder(res.qrToken);
+      refreshAttendance(courseId);
+    };
+
+    async function refreshAttendance(courseId) {
+      const list = await api('/api/attendance/course/' + courseId);
+      const ul = document.getElementById('live-list'); ul.innerHTML = '';
+      let present = 0;
+      list.forEach(a => {
+        if (a.present) present++;
+        const li = document.createElement('li');
+        li.className = 'py-2 flex items-center justify-between';
+        li.innerHTML = `<span>${a.student.fullName || ('User ' + a.student.id)}</span>` +
+          (a.present ? `<span class="text-white bg-green-600 px-2 py-0.5 rounded-full text-xs">Present</span>` : `<span class="text-white bg-red-600 px-2 py-0.5 rounded-full text-xs">Absent</span>`);
+        ul.appendChild(li);
+      });
+      const pct = list.length ? Math.round((present / list.length) * 100) : 0;
+      document.getElementById('piePct').textContent = pct;
+      drawPie(pct);
+    }
+
+    document.getElementById('lect-course').addEventListener('change', (e) => refreshAttendance(Number(e.target.value)));
+
+    document.getElementById('btn-scan').onclick = async () => {
+      const courseId = Number(document.getElementById('stud-courseId').value);
+      const studentId = Number(document.getElementById('stud-studentId').value);
+      const qrToken = document.getElementById('stud-qrToken').value;
+      const res = await api('/api/attendance/scan', { method: 'POST', body: JSON.stringify({ courseId, studentId, qrToken }) });
+      document.getElementById('stud-status').textContent = 'Submitted: ' + (res.status || 'ok');
+    };
+
+    // Simple drawings
+    function drawQrPlaceholder(text) { const c = document.getElementById('qrCanvas'); const ctx = c.getContext('2d'); ctx.fillStyle = '#111827'; ctx.fillRect(0,0,c.width,c.height); ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.fillText('QR', 8, 20); }
+    function drawPie(pct) { const c = document.getElementById('pie'); const ctx = c.getContext('2d'); const r = 100, cx = c.width/2, cy = c.height/2; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle = '#E5E7EB'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#4F46E5'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2, -Math.PI/2 + (Math.PI*2*(pct/100))); ctx.lineTo(cx,cy); ctx.fill(); }
+
+    // PWA registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
+    }
+  </script>
+</body>
+</html>
+
+

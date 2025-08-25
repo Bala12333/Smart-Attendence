@@ -1,0 +1,58 @@
+<svg width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lecturer Dashboard Mockup">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#4338CA"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1280" height="800" fill="#F3F4F6"/>
+  <!-- Top Bar -->
+  <rect x="0" y="0" width="1280" height="64" fill="url(#g)"/>
+  <text x="32" y="40" font-family="Inter, Arial" font-size="22" fill="#FFFFFF">Smart Attendance — Lecturer</text>
+
+  <!-- Content Area -->
+  <!-- Left Panel: Course Selector -->
+  <rect x="32" y="96" width="280" height="72" fill="#FFFFFF" stroke="#E5E7EB" rx="12"/>
+  <text x="48" y="128" font-family="Inter, Arial" font-size="14" fill="#6B7280">Current Course</text>
+  <rect x="48" y="140" width="240" height="24" fill="#EEF2FF" rx="6"/>
+  <text x="56" y="156" font-family="Inter, Arial" font-size="12" fill="#4338CA">CS101 — Data Structures ▼</text>
+
+  <!-- Center: QR Card -->
+  <rect x="336" y="96" width="544" height="360" fill="#FFFFFF" stroke="#E5E7EB" rx="16"/>
+  <text x="360" y="128" font-family="Inter, Arial" font-size="16" fill="#111827" font-weight="700">Session QR Code</text>
+  <rect x="520" y="160" width="176" height="176" fill="#FFFFFF" stroke="#E5E7EB" rx="12"/>
+  <!-- QR Placeholder -->
+  <rect x="540" y="180" width="136" height="136" fill="#111827"/>
+  <rect x="540" y="180" width="136" height="136" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.2"/>
+  <rect x="360" y="356" width="200" height="40" fill="#4F46E5" rx="8"/>
+  <text x="380" y="382" font-family="Inter, Arial" font-size="14" fill="#FFFFFF">Generate New QR</text>
+
+  <!-- Right: Pie Chart Card -->
+  <rect x="904" y="96" width="344" height="360" fill="#FFFFFF" stroke="#E5E7EB" rx="16"/>
+  <text x="928" y="128" font-family="Inter, Arial" font-size="16" fill="#111827" font-weight="700">Attendance Overview</text>
+  <!-- Pie -->
+  <circle cx="1076" cy="236" r="72" fill="#E5E7EB"/>
+  <path d="M1076 164 A72 72 0 1 1 1030 298 L1076 236 Z" fill="#4F46E5"/>
+  <text x="1056" y="244" font-family="Inter, Arial" font-size="20" fill="#111827" font-weight="700">78%</text>
+
+  <!-- Student List -->
+  <rect x="336" y="480" width="912" height="272" fill="#FFFFFF" stroke="#E5E7EB" rx="16"/>
+  <text x="360" y="512" font-family="Inter, Arial" font-size="16" fill="#111827" font-weight="700">Live Attendance</text>
+  <!-- Row 1 -->
+  <text x="360" y="548" font-family="Inter, Arial" font-size="14" fill="#111827">Ananya Gupta</text>
+  <rect x="1160" y="532" width="72" height="28" fill="#16A34A" rx="14"/>
+  <text x="1176" y="551" font-family="Inter, Arial" font-size="12" fill="#FFFFFF">Present</text>
+  <!-- Row 2 -->
+  <text x="360" y="584" font-family="Inter, Arial" font-size="14" fill="#111827">Rohit Verma</text>
+  <rect x="1160" y="568" width="72" height="28" fill="#DC2626" rx="14"/>
+  <text x="1178" y="587" font-family="Inter, Arial" font-size="12" fill="#FFFFFF">Absent</text>
+  <!-- Row 3 -->
+  <text x="360" y="620" font-family="Inter, Arial" font-size="14" fill="#111827">Priya Nair</text>
+  <rect x="1160" y="604" width="72" height="28" fill="#16A34A" rx="14"/>
+  <text x="1176" y="623" font-family="Inter, Arial" font-size="12" fill="#FFFFFF">Present</text>
+  <!-- Row 4 -->
+  <text x="360" y="656" font-family="Inter, Arial" font-size="14" fill="#111827">Arjun Mehta</text>
+  <rect x="1160" y="640" width="72" height="28" fill="#DC2626" rx="14"/>
+  <text x="1178" y="659" font-family="Inter, Arial" font-size="12" fill="#FFFFFF">Absent</text>
+</svg>
+

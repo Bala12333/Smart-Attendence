@@ -1,0 +1,17 @@
+C:\Attendence\backend\src\main\java\com\smartattendance\BackendApplication.java
+C:\Attendence\backend\src\main\java\com\smartattendance\config\DataSeeder.java
+C:\Attendence\backend\src\main\java\com\smartattendance\controller\AttendanceController.java
+C:\Attendence\backend\src\main\java\com\smartattendance\controller\AuthController.java
+C:\Attendence\backend\src\main\java\com\smartattendance\controller\CourseController.java
+C:\Attendence\backend\src\main\java\com\smartattendance\controller\ReportController.java
+C:\Attendence\backend\src\main\java\com\smartattendance\model\Attendance.java
+C:\Attendence\backend\src\main\java\com\smartattendance\model\Course.java
+C:\Attendence\backend\src\main\java\com\smartattendance\model\Role.java
+C:\Attendence\backend\src\main\java\com\smartattendance\model\User.java
+C:\Attendence\backend\src\main\java\com\smartattendance\repo\AttendanceRepository.java
+C:\Attendence\backend\src\main\java\com\smartattendance\repo\CourseRepository.java
+C:\Attendence\backend\src\main\java\com\smartattendance\repo\UserRepository.java
+C:\Attendence\backend\src\main\java\com\smartattendance\security\JwtFilter.java
+C:\Attendence\backend\src\main\java\com\smartattendance\security\JwtUtil.java
+C:\Attendence\backend\src\main\java\com\smartattendance\security\SecurityConfig.java
+C:\Attendence\backend\src\main\java\com\smartattendance\service\AuthService.java
