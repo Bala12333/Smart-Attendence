@@ -36,6 +36,7 @@ public class DataSeeder {
             student.setPasswordHash(encoder.encode("stud123"));
             student.setRole(Role.STUDENT);
             student.setFullName("Priya");
+            student.setMacAddress("00:1A:2B:3C:4D:5E");
             users.save(student);
 
             Course c1 = new Course();

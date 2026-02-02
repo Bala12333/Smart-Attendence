@@ -1,13 +1,16 @@
-const CACHE = 'sas-cache-v1';
+const CACHE = 'sas-cache-v2';
 const APP_SHELL = [
-  '/',
-  '/frontend/index.html',
-  '/frontend/manifest.json',
-  '/frontend/service-worker.js'
+  './',
+  './index.html',
+  './manifest.json',
+  './service-worker.js'
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    try { await cache.addAll(APP_SHELL); } catch (_) {}
+  })());
 });
 
 self.addEventListener('activate', (e) => {

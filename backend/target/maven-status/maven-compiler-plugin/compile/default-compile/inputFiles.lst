@@ -14,4 +14,7 @@ C:\Attendence\backend\src\main\java\com\smartattendance\repo\UserRepository.java
 C:\Attendence\backend\src\main\java\com\smartattendance\security\JwtFilter.java
 C:\Attendence\backend\src\main\java\com\smartattendance\security\JwtUtil.java
 C:\Attendence\backend\src\main\java\com\smartattendance\security\SecurityConfig.java
+C:\Attendence\backend\src\main\java\com\smartattendance\service\AttendanceService.java
 C:\Attendence\backend\src\main\java\com\smartattendance\service\AuthService.java
+C:\Attendence\backend\src\main\java\com\smartattendance\service\QrService.java
+C:\Attendence\backend\src\main\java\com\smartattendance\service\WifiService.java

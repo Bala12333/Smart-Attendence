@@ -21,6 +21,9 @@ public class User {
 
     private String fullName;
 
+    @Column(unique = true)
+    private String macAddress;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
@@ -31,6 +34,8 @@ public class User {
     public void setRole(Role role) { this.role = role; }
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getMacAddress() { return macAddress; }
+    public void setMacAddress(String macAddress) { this.macAddress = macAddress; }
 }
 
 

@@ -10,16 +10,24 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { indigo: { 600: '#4F46E5', 700: '#4338CA' }}}}};
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
 </head>
 <body class="bg-gray-100 text-gray-900">
   <header class="bg-indigo-600 text-white p-4 shadow">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <h1 class="font-semibold">Smart Attendance</h1>
-      <div id="userArea" class="text-sm opacity-90"></div>
+      <div class="flex items-center gap-3">
+        <div id="userArea" class="text-sm opacity-90"></div>
+        <button id="btn-install" class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Install</button>
+        <button id="btn-logout" class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Logout</button>
+      </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto p-4 space-y-6">
+    <!-- Offline banner -->
+    <div id="offline-banner" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm">You are offline. Connect to Wi‑Fi/Internet to proceed.</div>
     <!-- Login -->
     <section id="view-login" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <h2 class="text-lg font-semibold mb-2">Login</h2>
@@ -59,14 +67,20 @@
 
         <!-- Center: QR card -->
         <div class="lg:col-span-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold">Session QR Code</h3>
-            <button id="btn-new-qr" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Generate</button>
+            <div class="flex gap-2">
+              <button id="btn-start-wifi" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Start Attendance</button>
+              <button id="btn-new-qr" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Generate</button>
+            </div>
           </div>
           <div class="mt-4 flex items-center justify-center">
-            <canvas id="qrCanvas" width="180" height="180" class="border rounded-md"></canvas>
+            <canvas id="qrCanvas" width="180" height="180" class="hidden border rounded-md"></canvas>
+            <img id="qrImg" class="border rounded-md" width="180" height="180" alt="QR"/>
           </div>
           <div id="qrToken" class="mt-2 text-xs text-gray-500 break-all"></div>
+          <div id="wifiInfo" class="mt-2 text-xs text-gray-700"></div>
+          <div class="mt-1 text-xs text-gray-500">Auto refresh in <span id="qrTtl">--</span>s</div>
         </div>
 
         <!-- Right: Pie chart -->
@@ -90,16 +104,25 @@
       <div class="grid sm:grid-cols-4 gap-2 items-end mt-2">
         <input id="stud-courseId" class="border rounded-md p-2" placeholder="Course ID">
         <input id="stud-studentId" class="border rounded-md p-2" placeholder="Your User ID">
-        <input id="stud-qrToken" class="border rounded-md p-2" placeholder="QR Token">
+        <input id="stud-qrToken" class="border rounded-md p-2" placeholder="QR Token (scan or paste)">
         <button id="btn-scan" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Submit</button>
+      </div>
+      <div class="mt-3">
+        <div class="flex items-center gap-2">
+          <button id="btn-start-qr" class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Start QR Scan</button>
+          <button id="btn-stop-qr" class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Stop</button>
+        </div>
+        <div id="qr-reader" class="mt-2 hidden border rounded-md overflow-hidden" style="width: 320px; height: 240px;"></div>
       </div>
       <div id="stud-status" class="text-sm text-gray-600 mt-2"></div>
     </section>
   </main>
 
   <script>
-    const API = 'http://localhost:8080';
-    let token = null; let role = null; let username = null;
+    const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8080'
+      : `http://${location.hostname}:8080`;
+    let token = null; let role = null; let username = null; let qrScanner = null; let scanning = false;
 
     function setView() {
       document.getElementById('view-login').classList.toggle('hidden', !!token);
@@ -107,6 +130,7 @@
       document.getElementById('view-lecturer').classList.toggle('hidden', role !== 'LECTURER');
       document.getElementById('view-student').classList.toggle('hidden', role !== 'STUDENT');
       document.getElementById('userArea').textContent = token ? (username + ' (' + role + ')') : '';
+      document.getElementById('btn-logout').classList.toggle('hidden', !token);
     }
 
     async function api(path, opts = {}) {
@@ -130,6 +154,11 @@
       } catch (e) { alert('Login failed'); }
     };
 
+    document.getElementById('btn-logout').onclick = () => {
+      token = null; role = null; username = null;
+      setView();
+    };
+
     async function loadCourses() {
       const courses = await api('/api/courses');
       const ul = document.getElementById('admin-courses'); if (ul) ul.innerHTML = '';
@@ -148,12 +177,37 @@
     };
 
     // QR generation and live list stub (pull latest attendance for course)
-    document.getElementById('btn-new-qr').onclick = async () => {
+    let qrTimer = null; let qrCountdown = null;
+    async function genQr() {
       const courseId = Number(document.getElementById('lect-course').value);
-      const res = await api('/api/attendance/qr', { method: 'POST', body: JSON.stringify({ courseId }) });
-      document.getElementById('qrToken').textContent = res.qrToken;
-      drawQrPlaceholder(res.qrToken);
+      // Fetch PNG directly so we don't display the token
+      const headers = { 'Content-Type': 'application/json' }; if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + '/api/attendance/qr/png', { method: 'POST', headers, body: JSON.stringify({ courseId }) });
+      const blob = await res.blob(); const url = URL.createObjectURL(blob);
+      document.getElementById('qrImg').src = url;
+      document.getElementById('qrToken').textContent = '';
       refreshAttendance(courseId);
+      startCountdown(120);
+    }
+    document.getElementById('btn-new-qr').onclick = genQr;
+
+    function startCountdown(seconds) {
+      clearInterval(qrTimer); clearInterval(qrCountdown);
+      let left = seconds;
+      document.getElementById('qrTtl').textContent = left;
+      qrCountdown = setInterval(() => {
+        left -= 1; if (left < 0) left = 0; document.getElementById('qrTtl').textContent = left;
+      }, 1000);
+      qrTimer = setInterval(genQr, seconds * 1000);
+    }
+
+    document.getElementById('btn-start-wifi').onclick = async () => {
+      const courseId = Number(document.getElementById('lect-course').value);
+      const res = await api('/api/attendance/start', { method: 'POST', body: JSON.stringify({ courseId }) });
+      document.getElementById('wifiInfo').textContent = `SSID: ${res.ssid}, Pass: ${res.password}`;
+      // Wi‑Fi QR (WIFI:T:WPA;S:<ssid>;P:<pass>;;)
+      const wifiText = `WIFI:T:WPA;S:${res.ssid};P:${res.password};;`;
+      await drawQr(wifiText);
     };
 
     async function refreshAttendance(courseId) {
@@ -176,21 +230,74 @@
     document.getElementById('lect-course').addEventListener('change', (e) => refreshAttendance(Number(e.target.value)));
 
     document.getElementById('btn-scan').onclick = async () => {
+      if (!navigator.onLine) { alert('No network connection. Connect to Wi‑Fi/Internet.'); return; }
       const courseId = Number(document.getElementById('stud-courseId').value);
       const studentId = Number(document.getElementById('stud-studentId').value);
       const qrToken = document.getElementById('stud-qrToken').value;
+      if (!qrToken) { alert('Please scan or paste a valid QR token.'); return; }
       const res = await api('/api/attendance/scan', { method: 'POST', body: JSON.stringify({ courseId, studentId, qrToken }) });
       document.getElementById('stud-status').textContent = 'Submitted: ' + (res.status || 'ok');
     };
 
+    // QR scanning (student)
+    function toggleScanner(show) {
+      document.getElementById('qr-reader').classList.toggle('hidden', !show);
+    }
+    document.getElementById('btn-start-qr').onclick = async () => {
+      if (scanning) return; scanning = true; toggleScanner(true);
+      try {
+        const elId = 'qr-reader';
+        qrScanner = new Html5Qrcode(elId);
+        const decoded = (txt) => {
+          document.getElementById('stud-qrToken').value = txt;
+          document.getElementById('stud-status').textContent = 'QR captured';
+          document.getElementById('btn-stop-qr').click();
+        };
+        const failed = (e) => {};
+        await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 200 }, decoded, failed);
+      } catch (e) {
+        document.getElementById('stud-status').textContent = 'Camera error: ' + (e.message || e);
+      }
+    };
+    document.getElementById('btn-stop-qr').onclick = async () => {
+      if (!scanning) return; scanning = false;
+      try { if (qrScanner) { await qrScanner.stop(); await qrScanner.clear(); } } catch {}
+      toggleScanner(false);
+    };
+
     // Simple drawings
-    function drawQrPlaceholder(text) { const c = document.getElementById('qrCanvas'); const ctx = c.getContext('2d'); ctx.fillStyle = '#111827'; ctx.fillRect(0,0,c.width,c.height); ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.fillText('QR', 8, 20); }
+    async function drawQr(text) { const c = document.getElementById('qrCanvas'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); await QRCode.toCanvas(c, text, { width: 180, margin: 1 }); }
     function drawPie(pct) { const c = document.getElementById('pie'); const ctx = c.getContext('2d'); const r = 100, cx = c.width/2, cy = c.height/2; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle = '#E5E7EB'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#4F46E5'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2, -Math.PI/2 + (Math.PI*2*(pct/100))); ctx.lineTo(cx,cy); ctx.fill(); }
 
     // PWA registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
     }
+
+    // PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); deferredPrompt = e;
+      document.getElementById('btn-install').classList.remove('hidden');
+    });
+    document.getElementById('btn-install').onclick = async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if (outcome) document.getElementById('btn-install').classList.add('hidden');
+    };
+
+    // Offline/online handling
+    function updateOnline() {
+      const offline = !navigator.onLine;
+      document.getElementById('offline-banner').classList.toggle('hidden', !offline);
+      const disable = (id) => { const el = document.getElementById(id); if (el) el.disabled = offline; };
+      ['btn-scan','btn-new-qr','btn-start-wifi'].forEach(disable);
+    }
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    updateOnline();
   </script>
 </body>
 </html>
