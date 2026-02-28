@@ -33,10 +33,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(reg -> reg
-                        .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/courses/**").authenticated()
-                        .anyRequest().authenticated()
-                );
+                        .anyRequest().authenticated());
 
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -66,5 +65,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
-

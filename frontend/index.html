@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,26 +9,30 @@
   <title>Smart Attendance</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { theme: { extend: { colors: { indigo: { 600: '#4F46E5', 700: '#4338CA' }}}}};
+    tailwind.config = { theme: { extend: { colors: { indigo: { 600: '#4F46E5', 700: '#4338CA' } } } } };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
   <script src="https://unpkg.com/html5-qrcode" defer></script>
 </head>
+
 <body class="bg-gray-100 text-gray-900">
   <header class="bg-indigo-600 text-white p-4 shadow">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <h1 class="font-semibold">Smart Attendance</h1>
       <div class="flex items-center gap-3">
         <div id="userArea" class="text-sm opacity-90"></div>
-        <button id="btn-install" class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Install</button>
-        <button id="btn-logout" class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Logout</button>
+        <button id="btn-install"
+          class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Install</button>
+        <button id="btn-logout"
+          class="hidden bg-white/10 hover:bg-white/20 text-white text-sm rounded-md px-3 py-1">Logout</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto p-4 space-y-6">
     <!-- Offline banner -->
-    <div id="offline-banner" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm">You are offline. Connect to Wi‑Fi/Internet to proceed.</div>
+    <div id="offline-banner" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm">You are
+      offline. Connect to Wi‑Fi/Internet to proceed.</div>
     <!-- Login -->
     <section id="view-login" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <h2 class="text-lg font-semibold mb-2">Login</h2>
@@ -36,7 +41,8 @@
         <input id="login-password" type="password" class="border rounded-md p-2" placeholder="Password">
         <button id="btn-login" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Login</button>
       </div>
-      <p class="text-xs text-gray-500 mt-2">Admin: admin/admin123, Lecturer: lecturer/lect123, Student: student/stud123</p>
+      <p class="text-xs text-gray-500 mt-2">Admin: admin/admin123, Lecturer: lecturer/lect123, Student: student/stud123
+      </p>
     </section>
 
     <!-- Admin View -->
@@ -46,11 +52,45 @@
         <input id="course-code" class="border rounded-md p-2" placeholder="Code (e.g., CS101)">
         <input id="course-name" class="border rounded-md p-2" placeholder="Name">
         <input id="course-lecturerId" class="border rounded-md p-2" placeholder="Lecturer ID">
-        <button id="btn-create-course" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Create</button>
+        <button id="btn-create-course"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-4">Create</button>
       </div>
       <div class="mt-4">
         <button id="btn-load-courses" class="text-indigo-700">Reload Courses</button>
         <ul id="admin-courses" class="mt-2 space-y-1 text-sm"></ul>
+      </div>
+
+      <hr class="my-6 border-gray-200">
+
+      <h2 class="text-lg font-semibold mb-4">Admin — Manage Users</h2>
+      <div class="grid sm:grid-cols-5 gap-2 items-end">
+        <input id="user-username" class="col-span-1 border rounded-md p-2" placeholder="Username">
+        <input id="user-password" type="password" class="col-span-1 border rounded-md p-2" placeholder="Password">
+        <input id="user-fullname" class="col-span-1 border rounded-md p-2" placeholder="Full Name">
+        <select id="user-role" class="col-span-1 border rounded-md p-2">
+          <option value="LECTURER">Lecturer</option>
+          <option value="STUDENT">Student</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+        <button id="btn-create-user" class="col-span-1 bg-green-600 hover:bg-green-700 text-white rounded-md p-2">Create
+          User</button>
+      </div>
+      <div class="mt-4">
+        <button id="btn-load-users" class="text-indigo-700">Reload Users</button>
+        <div class="mt-2 overflow-x-auto">
+          <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th class="px-4 py-2">ID</th>
+                <th class="px-4 py-2">Username</th>
+                <th class="px-4 py-2">Full Name</th>
+                <th class="px-4 py-2">Role</th>
+                <th class="px-4 py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -70,13 +110,16 @@
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold">Session QR Code</h3>
             <div class="flex gap-2">
-              <button id="btn-start-wifi" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Start Attendance</button>
-              <button id="btn-new-qr" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Generate</button>
+              <button id="btn-start-wifi"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Start
+                Attendance</button>
+              <button id="btn-new-qr"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-md px-3 py-1 text-sm">Generate</button>
             </div>
           </div>
           <div class="mt-4 flex items-center justify-center">
             <canvas id="qrCanvas" width="180" height="180" class="hidden border rounded-md"></canvas>
-            <img id="qrImg" class="border rounded-md" width="180" height="180" alt="QR"/>
+            <img id="qrImg" class="border rounded-md" width="180" height="180" alt="QR" />
           </div>
           <div id="qrToken" class="mt-2 text-xs text-gray-500 break-all"></div>
           <div id="wifiInfo" class="mt-2 text-xs text-gray-700"></div>
@@ -109,10 +152,13 @@
       </div>
       <div class="mt-3">
         <div class="flex items-center gap-2">
-          <button id="btn-start-qr" class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Start QR Scan</button>
-          <button id="btn-stop-qr" class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Stop</button>
+          <button id="btn-start-qr"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Start QR Scan</button>
+          <button id="btn-stop-qr"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md px-3 py-1 text-sm">Stop</button>
         </div>
-        <div id="qr-reader" class="mt-2 hidden border rounded-md overflow-hidden" style="width: 320px; height: 240px;"></div>
+        <div id="qr-reader" class="mt-2 hidden border rounded-md overflow-hidden" style="width: 320px; height: 240px;">
+        </div>
       </div>
       <div id="stud-status" class="text-sm text-gray-600 mt-2"></div>
     </section>
@@ -138,7 +184,9 @@
       if (token) headers['Authorization'] = 'Bearer ' + token;
       const res = await fetch(API + path, { ...opts, headers });
       if (!res.ok) throw new Error(await res.text());
-      return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text();
+      const type = res.headers.get('content-type');
+      if (type && type.includes('application/json')) return res.json();
+      return await res.text();
     }
 
     document.getElementById('btn-login').onclick = async () => {
@@ -150,7 +198,8 @@
         const payload = JSON.parse(atob(token.split('.')[1]));
         role = payload.role;
         setView();
-        if (role === 'ADMIN' || role === 'LECTURER') loadCourses();
+        if (role === 'ADMIN') { loadCourses(); loadUsers(); }
+        else if (role === 'LECTURER') loadCourses();
       } catch (e) { alert('Login failed'); }
     };
 
@@ -174,6 +223,53 @@
       const lecturerId = Number(document.getElementById('course-lecturerId').value || '0');
       await api('/api/courses', { method: 'POST', body: JSON.stringify({ code, name, lecturerId }) });
       await loadCourses();
+    };
+
+    async function loadUsers() {
+      const users = await api('/api/auth/users');
+      const tbody = document.getElementById('admin-users'); if (tbody) tbody.innerHTML = '';
+      users.forEach(u => {
+        if (tbody) {
+          const tr = document.createElement('tr');
+          tr.className = 'bg-white border-b';
+          tr.innerHTML = `
+            <td class="px-4 py-2">${u.id}</td>
+            <td class="px-4 py-2">${u.username}</td>
+            <td class="px-4 py-2">${u.fullName || '-'}</td>
+            <td class="px-4 py-2">${u.role}</td>
+            <td class="px-4 py-2">
+              <button onclick="deleteUser(${u.id})" class="text-red-600 hover:underline">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+    }
+
+    document.getElementById('btn-load-users').onclick = loadUsers;
+    document.getElementById('btn-load-courses').onclick = loadCourses;
+
+    document.getElementById('btn-create-user').onclick = async () => {
+      const username = document.getElementById('user-username').value;
+      const password = document.getElementById('user-password').value;
+      const fullName = document.getElementById('user-fullname').value;
+      const role = document.getElementById('user-role').value;
+      if (!username || !password || !role) return alert('Username, password, and role are required');
+      try {
+        await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ username, password, fullName, role }) });
+        document.getElementById('user-username').value = '';
+        document.getElementById('user-password').value = '';
+        document.getElementById('user-fullname').value = '';
+        await loadUsers();
+      } catch (e) { alert('Failed to create user: ' + e.message); }
+    };
+
+    window.deleteUser = async (id) => {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      try {
+        await api('/api/auth/users/' + id, { method: 'DELETE' });
+        await loadUsers();
+      } catch (e) { alert('Failed to delete user: ' + e.message); }
     };
 
     // QR generation and live list stub (pull latest attendance for course)
@@ -253,7 +349,7 @@
           document.getElementById('stud-status').textContent = 'QR captured';
           document.getElementById('btn-stop-qr').click();
         };
-        const failed = (e) => {};
+        const failed = (e) => { };
         await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 200 }, decoded, failed);
       } catch (e) {
         document.getElementById('stud-status').textContent = 'Camera error: ' + (e.message || e);
@@ -261,13 +357,13 @@
     };
     document.getElementById('btn-stop-qr').onclick = async () => {
       if (!scanning) return; scanning = false;
-      try { if (qrScanner) { await qrScanner.stop(); await qrScanner.clear(); } } catch {}
+      try { if (qrScanner) { await qrScanner.stop(); await qrScanner.clear(); } } catch { }
       toggleScanner(false);
     };
 
     // Simple drawings
-    async function drawQr(text) { const c = document.getElementById('qrCanvas'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); await QRCode.toCanvas(c, text, { width: 180, margin: 1 }); }
-    function drawPie(pct) { const c = document.getElementById('pie'); const ctx = c.getContext('2d'); const r = 100, cx = c.width/2, cy = c.height/2; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle = '#E5E7EB'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#4F46E5'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2, -Math.PI/2 + (Math.PI*2*(pct/100))); ctx.lineTo(cx,cy); ctx.fill(); }
+    async function drawQr(text) { const c = document.getElementById('qrCanvas'); const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); await QRCode.toCanvas(c, text, { width: 180, margin: 1 }); }
+    function drawPie(pct) { const c = document.getElementById('pie'); const ctx = c.getContext('2d'); const r = 100, cx = c.width / 2, cy = c.height / 2; ctx.clearRect(0, 0, c.width, c.height); ctx.fillStyle = '#E5E7EB'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#4F46E5'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * (pct / 100))); ctx.lineTo(cx, cy); ctx.fill(); }
 
     // PWA registration
     if ('serviceWorker' in navigator) {
@@ -293,13 +389,12 @@
       const offline = !navigator.onLine;
       document.getElementById('offline-banner').classList.toggle('hidden', !offline);
       const disable = (id) => { const el = document.getElementById(id); if (el) el.disabled = offline; };
-      ['btn-scan','btn-new-qr','btn-start-wifi'].forEach(disable);
+      ['btn-scan', 'btn-new-qr', 'btn-start-wifi'].forEach(disable);
     }
     window.addEventListener('online', updateOnline);
     window.addEventListener('offline', updateOnline);
     updateOnline();
   </script>
 </body>
+
 </html>
-
-

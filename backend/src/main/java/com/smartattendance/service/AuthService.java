@@ -7,6 +7,7 @@ import com.smartattendance.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,9 +37,14 @@ public class AuthService {
                 .filter(u -> passwordEncoder.matches(password, u.getPasswordHash()))
                 .map(u -> jwtUtil.generateToken(u.getUsername(), Map.of(
                         "role", u.getRole().name(),
-                        "uid", u.getId()
-                )));
+                        "uid", u.getId())));
+    }
+
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
     }
 }
-
-
